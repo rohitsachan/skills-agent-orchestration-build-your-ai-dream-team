@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="A sample dashboard for tracking project status and recent activity.">
+    <title>Project Pulse</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="page-header">
+      <div>
+        <h1>Project Pulse</h1>
+        <p>Illustrative sample data — not live project reporting.</p>
+      </div>
+      <p id="project-count" class="project-count" aria-live="polite" aria-atomic="true">Loading projects…</p>
+    </header>
+
+    <main>
+      <h2 class="visually-hidden">Projects</h2>
+      <p id="load-status" role="status">Loading project data…</p>
+      <div class="dashboard"></div>
+      <p id="load-error" role="alert" hidden></p>
+    </main>
+
+    <script>
+      const dashboard = document.querySelector(".dashboard");
+      const projectCount = document.querySelector("#project-count");
+      const loadStatus = document.querySelector("#load-status");
+      const loadError = document.querySelector("#load-error");
+
+      function normalizeVariant(value, allowedValues, aliases = {}) {
+        const normalized = value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+        const variant = aliases[normalized] || normalized;
+        return allowedValues.has(variant) ? variant : null;
+      }
+
+      function addDetail(card, label, value, className, dataAttribute, variant) {
+        const detail = document.createElement("p");
+        detail.className = className;
+        if (variant) {
+          detail.setAttribute(dataAttribute, variant);
+        }
+
+        const heading = document.createElement("strong");
+        heading.textContent = `${label}: `;
+        detail.append(heading, document.createTextNode(value));
+        card.append(detail);
+      }
+
+      function renderProjects(projects) {
+        const fragment = document.createDocumentFragment();
+
+        for (const project of projects) {
+          const card = document.createElement("article");
+          card.className = "project-card";
+
+          const name = document.createElement("h3");
+          name.textContent = project.name;
+          card.append(name);
+
+          const owner = document.createElement("p");
+          owner.textContent = `Owner: ${project.owner}`;
+          card.append(owner);
+
+          const status = normalizeVariant(
+            project.status,
+            new Set(["on-track", "active", "complete", "at-risk", "delayed", "blocked", "overdue", "planned", "not-started", "on-hold"]),
+            { "in-progress": "active", completed: "complete" }
+          );
+          const priority = normalizeVariant(project.priority, new Set(["high", "urgent", "medium", "low"]));
+          addDetail(card, "Status", project.status, "project-status", "data-status", status);
+          addDetail(card, "Recent activity", project.recentActivity, "project-activity");
+          addDetail(card, "Priority", project.priority, "project-priority", "data-priority", priority);
+          fragment.append(card);
+        }
+
+        dashboard.replaceChildren(fragment);
+        projectCount.textContent = `${projects.length} ${projects.length === 1 ? "project" : "projects"}`;
+        loadStatus.hidden = projects.length > 0;
+        if (projects.length === 0) {
+          loadStatus.textContent = "No projects are available.";
+        }
+      }
+
+      async function loadProjects() {
+        try {
+          const response = await fetch("project-data.json");
+          if (!response.ok) {
+            throw new Error(`The data request returned ${response.status}.`);
+          }
+
+          const data = await response.json();
+          if (
+            !data ||
+            !Array.isArray(data.projects) ||
+            !data.projects.every((project) =>
+              project &&
+              ["name", "owner", "status", "recentActivity", "priority"].every(
+                (key) => typeof project[key] === "string"
+              )
+            )
+          ) {
+            throw new Error("The project data does not match the expected format.");
+          }
+
+          renderProjects(data.projects);
+        } catch (error) {
+          projectCount.textContent = "Projects unavailable";
+          loadStatus.hidden = true;
+          loadError.textContent = `Unable to load project data. ${error.message}`;
+          loadError.hidden = false;
+        }
+      }
+
+      loadProjects();
+    </script>
+  </body>
+</html>

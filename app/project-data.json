@@ -1,0 +1,32 @@
+{
+  "projects": [
+    {
+      "name": "Atlas Migration",
+      "owner": "Mina Patel",
+      "status": "On track",
+      "recentActivity": "Completed the staging data import",
+      "priority": "High"
+    },
+    {
+      "name": "Customer Insights",
+      "owner": "Jordan Lee",
+      "status": "At risk",
+      "recentActivity": "Research interviews scheduled for this week",
+      "priority": "Medium"
+    },
+    {
+      "name": "Mobile Refresh",
+      "owner": "Alex Rivera",
+      "status": "In progress",
+      "recentActivity": "Shared the updated navigation prototype",
+      "priority": "High"
+    },
+    {
+      "name": "Knowledge Hub",
+      "owner": "Sam Okafor",
+      "status": "On track",
+      "recentActivity": "Published the first set of help articles",
+      "priority": "Low"
+    }
+  ]
+}
